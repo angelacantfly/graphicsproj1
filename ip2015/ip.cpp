@@ -5,7 +5,9 @@
 #include <math.h>
 #include <time.h>
 
-
+#define RED	0
+#define GREEN	1
+#define BLUE	2
 
 /*
 * convolve with a box filter
@@ -42,8 +44,19 @@ Image* ip_blur_triangle (Image* src, int size)
 */
 Image* ip_brighten (Image* src, double alpha)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    Image* blackImage = new Image(width,height);
+    
+    if (alpha > 0 && alpha < 1)
+        return ip_interpolate(src, blackImage, alpha);
+    
+    if (alpha < 0)
+        return ip_interpolate(blackImage, src, alpha);
+//    return ip_interpolate(src, blackImage, alpha);
+    return NULL;
+    
 }
 
 
@@ -52,8 +65,22 @@ Image* ip_brighten (Image* src, double alpha)
 */
 Image* ip_color_shift(Image* src)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            newImage->setPixel(w, h, GREEN, src->getPixel(w, h, RED));
+            newImage->setPixel(w, h, BLUE, src->getPixel(w, h, GREEN));
+            newImage->setPixel(w, h, RED, src->getPixel(w, h, BLUE));
+        }
+    }
+    
+	cerr << "Done!" << endl;
+	return newImage;
 }
 
 
@@ -114,8 +141,21 @@ Image* ip_edge_detect (Image* src)
 */
 Image* ip_extract (Image* src, int channel)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++c)
+                if (c == channel) newImage->setPixel(w, h, c, src->getPixel(w, h, c));
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
 }
 
 
@@ -138,8 +178,30 @@ Image* ip_fun_warp (Image* src)
 */
 Image* ip_grey (Image* src)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    double grey;
+    double RED_CONSTANT = .2126;
+    double GREEN_CONSTANT = .7152;
+    double BLUE_CONSTANT = .0722;
+    
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            grey = RED_CONSTANT * src->getPixel(w, h, RED) +
+                    GREEN_CONSTANT * src->getPixel(w, h, GREEN) +
+                    BLUE_CONSTANT * src->getPixel(w, h, BLUE);
+            newImage->setPixel(w, h, GREEN, grey);
+            newImage->setPixel(w, h, BLUE, grey);
+            newImage->setPixel(w, h, RED, grey);
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
 }
 
 
@@ -157,8 +219,37 @@ Image* ip_image_shift (Image* src, double dx, double dy)
 */
 Image* ip_interpolate (Image* src1, Image* src2, double alpha)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    
+    // get width and height
+    int width = src1->getWidth();
+    int height = src1->getHeight();
+    Pixel src1Pixel;
+    Pixel src2Pixel;
+    double currentChannel;
+    
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            src1Pixel = src1->getPixel(w, h);
+            src2Pixel = src2->getPixel(w, h);
+            for (int c = 0; c < 3; ++c)
+            {
+                currentChannel = alpha * src1Pixel.getColor(c) + (1-alpha)* src2Pixel.getColor(c);
+                if (currentChannel > 1)
+                    newImage->setPixel(w, h, c, 1);
+                if (currentChannel <0)
+                    newImage->setPixel(w, h, c, 0);
+                else
+                    newImage->setPixel(w, h, c, currentChannel);
+
+            }
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
 }
 /*
 * invert input image
@@ -283,8 +374,24 @@ Image* ip_scale (Image* src, double xFac, double yFac, int samplingMode,
 */
 Image* ip_threshold (Image* src, double cutoff)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++ c)
+                if (src->getPixel(w, h, c) > cutoff) {
+                    newImage->setPixel(w, h, c, 1);
+                }
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
 }
 
 

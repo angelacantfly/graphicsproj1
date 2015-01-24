@@ -24,9 +24,6 @@
 */
 
 
-
-
-
 Image*	ip_blur_box (Image* src, int size);
 Image*	ip_blur_gaussian (Image* src, int size, double sigma);
 Image*	ip_blur_triangle (Image* src, int size);

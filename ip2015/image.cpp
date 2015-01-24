@@ -1,5 +1,4 @@
 #include "image.h"
-#include <GL/glut.h>
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
@@ -490,7 +489,7 @@ int Image::writeBMP (const char* filename)
 		if (writeBMP(file) == -1)
 		{
 			file.close();
-			unlink(filename);
+			//unlink(filename);
 			return -1;
 		}
 		else
