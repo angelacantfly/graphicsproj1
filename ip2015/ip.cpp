@@ -49,12 +49,12 @@ Image* ip_brighten (Image* src, double alpha)
     int height = src->getHeight();
     Image* blackImage = new Image(width,height);
     
-    if (alpha > 0 && alpha < 1)
+    if (alpha > 0 && alpha <= 1)
         return ip_interpolate(src, blackImage, alpha);
     
-    if (alpha < 0)
-        return ip_interpolate(blackImage, src, alpha);
-//    return ip_interpolate(src, blackImage, alpha);
+    if (alpha > 1)
+        return ip_interpolate(src, blackImage, alpha);
+
     return NULL;
     
 }
@@ -105,15 +105,62 @@ Image* ip_contrast (Image* src, double alpha)
 	return NULL;
 }
 
-
+double correctChannel(double value)
+{
+    if (value > 1) return 1;
+    if (value < 0) return 0;
+    return value;
+}
 
 /*
 * convolve an image with a kernel
 */
 Image* ip_convolve (Image* src, int size, double* kernel )
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    int width = src->getWidth();
+    int height = src->getHeight();
+    assert(size%2 ==1); // makes sure that the size is odd number
+    
+    double currentRed;
+    double currentGreen;
+    double currentBlue;
+    int countNeightbor = 0;
+    
+    int currentX;
+    int currentY;
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            currentRed = 0;
+            currentGreen = 0;
+            currentBlue = 0;
+            countNeightbor = 0;
+            
+            for (int nx = -(size-1)/2; nx < (size-1)/2 + 1; ++nx )
+                for (int ny = -(size-1)/2; ny < (size-1)/2 + 1; ++ny)
+                {
+                    currentX = w + nx;
+                    currentY = h + ny;
+                    if (currentX < 0 || currentX >= size || currentY < 0 || currentY >= size) {
+                        continue;
+                    }
+                    currentRed += + src->getPixel(currentX, currentY, RED) * kernel[countNeightbor];
+                    currentGreen += src->getPixel(currentX, currentY, GREEN) * kernel[countNeightbor];
+                    currentBlue += src->getPixel(currentX, currentY, BLUE) * kernel[countNeightbor];
+                    countNeightbor++;
+                }
+            
+            newImage->setPixel(w, h, RED, correctChannel(currentRed) );
+            newImage->setPixel(w, h, GREEN, correctChannel(currentGreen));
+            newImage->setPixel(w, h, BLUE, correctChannel(currentBlue));
+            
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
 }
 
 
@@ -219,6 +266,7 @@ Image* ip_image_shift (Image* src, double dx, double dy)
 */
 Image* ip_interpolate (Image* src1, Image* src2, double alpha)
 {
+    //FIXME: negative alpha value freaks out and doesn't end
     
     // get width and height
     int width = src1->getWidth();
@@ -236,13 +284,8 @@ Image* ip_interpolate (Image* src1, Image* src2, double alpha)
             src2Pixel = src2->getPixel(w, h);
             for (int c = 0; c < 3; ++c)
             {
-                currentChannel = alpha * src1Pixel.getColor(c) + (1-alpha)* src2Pixel.getColor(c);
-                if (currentChannel > 1)
-                    newImage->setPixel(w, h, c, 1);
-                if (currentChannel <0)
-                    newImage->setPixel(w, h, c, 0);
-                else
-                    newImage->setPixel(w, h, c, currentChannel);
+                currentChannel = alpha * src1Pixel.getColor(c) + (1.0-alpha)* src2Pixel.getColor(c);
+                newImage->setPixel(w, h, c, correctChannel(currentChannel));
 
             }
         }
