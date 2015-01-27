@@ -14,8 +14,15 @@
 */
 Image* ip_blur_box (Image* src, int size)
 {
-    cerr << "This function is not implemented." << endl;
-    return NULL;
+    int kernelSize = size*size;
+    double* kernel = new double[kernelSize];
+    
+    for(int i = 0; i < kernelSize; i++){
+        kernel[i] = ((double)1)/kernelSize;
+        cerr << kernel[i] << endl;
+    }
+    
+    return ip_convolve(src, size, kernel);
     
 }
 
@@ -25,8 +32,27 @@ Image* ip_blur_box (Image* src, int size)
 */
 Image* ip_blur_gaussian (Image* src, int size, double sigma)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    int kernelSize = size*size;
+    double* kernel = new double[kernelSize];
+    int count = 0;
+    double sum = 0;
+    
+    for (int nx = -(size-1)/2; nx < (size-1)/2 + 1; ++nx )
+        for (int ny = -(size-1)/2; ny < (size-1)/2 + 1; ++ny)
+        {
+            double coord = pow(nx, 2)+ pow(ny, 2);
+            kernel[count] = exp(-coord/(2*pow(sigma, 2)));
+            sum += kernel[count];
+            cerr<< kernel[count] << endl;
+            ++count;
+        }
+    
+    for (int i = 0; i < kernelSize; ++i) {
+        kernel[i] = kernel[i]/sum;
+        cerr<< kernel[count] << endl;
+    }
+    
+    return ip_convolve(src, size, kernel);
 }
 
 
