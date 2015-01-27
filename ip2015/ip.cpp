@@ -101,8 +101,20 @@ Image* ip_composite (Image* src1, Image* src2,
 */
 Image* ip_contrast (Image* src, double alpha)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* grey = new Image(width, height);
+    
+    for (int w = 0; w <width; ++w)
+        for (int h = 0; h<height; ++h )
+        {
+            grey->setPixel(w, h, RED, 0.5);
+            grey->setPixel(w, h, GREEN, 0.5);
+            grey->setPixel(w, h, BLUE, 0.5);
+        }
+    
+    return ip_interpolate(src, grey, alpha);
 }
 
 double correctChannel(double value)
@@ -267,6 +279,8 @@ Image* ip_image_shift (Image* src, double dx, double dy)
 Image* ip_interpolate (Image* src1, Image* src2, double alpha)
 {
     //FIXME: negative alpha value freaks out and doesn't end
+    // Only seems to be a problem with brighten function
+    // works for saturate and contrast
     
     // get width and height
     int width = src1->getWidth();
@@ -299,8 +313,20 @@ Image* ip_interpolate (Image* src1, Image* src2, double alpha)
 */
 Image* ip_invert (Image* src)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* grey = new Image(width,height);
+    
+    for (int w =0; w<width; ++w)
+        for (int h=0; h<height; ++h)
+        {
+            grey->setPixel(w, h, RED, 0.5);
+            grey->setPixel(w, h, GREEN, 0.5);
+            grey->setPixel(w, h, BLUE, 0.5);
+        }
+    
+    return ip_interpolate(src, grey, -1);
 }
 
 
@@ -396,8 +422,8 @@ Image* ip_rotate (Image* src, double theta, int x, int y, int samplingMode,
 */
 Image* ip_saturate (Image* src, double alpha)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    Image* greyImage = ip_grey(src);
+    return ip_interpolate(src, greyImage, alpha);
 }
 
 
