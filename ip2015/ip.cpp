@@ -212,9 +212,23 @@ Image* ip_convolve (Image* src, int size, double* kernel )
 */
 Image* ip_crop (Image* src, int x0, int y0, int x1, int y1)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    // Create image of proper size
+    Image* newImage =  new Image(x1- x0, y1-y0);
+    
+    cerr<< "size is" << x1-x0 << endl;
+    
+    for(int x = x0; x < x1; x++){
+        for(int y = y0; y < y1; y++){
+           
+            newImage->setPixel(x-x0, y-y0, RED, src->getPixel(x, y, RED));
+            newImage->setPixel(x-x0, y-y0, GREEN, src->getPixel(x, y, GREEN));
+            newImage->setPixel(x-x0, y-y0, BLUE, src->getPixel(x, y, BLUE));
+            
+        }
+    }
+    return newImage;
 }
+
 /*
 * convolve with an edge detection kernel
 */
