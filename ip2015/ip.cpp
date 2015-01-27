@@ -14,8 +14,9 @@
 */
 Image* ip_blur_box (Image* src, int size)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    cerr << "This function is not implemented." << endl;
+    return NULL;
+    
 }
 
 
@@ -158,10 +159,10 @@ Image* ip_convolve (Image* src, int size, double* kernel )
                 {
                     currentX = w + nx;
                     currentY = h + ny;
-                    if (currentX < 0 || currentX >= size || currentY < 0 || currentY >= size) {
+                    if (currentX < 0 || currentX >= width || currentY < 0 || currentY >= height) {
                         continue;
                     }
-                    currentRed += + src->getPixel(currentX, currentY, RED) * kernel[countNeightbor];
+                    currentRed += src->getPixel(currentX, currentY, RED) * kernel[countNeightbor];
                     currentGreen += src->getPixel(currentX, currentY, GREEN) * kernel[countNeightbor];
                     currentBlue += src->getPixel(currentX, currentY, BLUE) * kernel[countNeightbor];
                     countNeightbor++;
@@ -193,8 +194,16 @@ Image* ip_crop (Image* src, int x0, int y0, int x1, int y1)
 */
 Image* ip_edge_detect (Image* src)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    
+    double* kernel = new double[9];
+    
+    for(int i = 0; i < 9; i++){
+        kernel[i] = -1;
+    }
+    
+    kernel[4] = 8;
+    
+    return ip_convolve(src, 3, kernel);
 }
 
 
