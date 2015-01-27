@@ -106,6 +106,7 @@ Image* ip_contrast (Image* src, double alpha)
     
     Image* grey = new Image(width, height);
     
+
     for (int w = 0; w <width; ++w)
         for (int h = 0; h<height; ++h )
         {
@@ -113,8 +114,10 @@ Image* ip_contrast (Image* src, double alpha)
             grey->setPixel(w, h, GREEN, 0.5);
             grey->setPixel(w, h, BLUE, 0.5);
         }
+
     
     return ip_interpolate(src, grey, alpha);
+
 }
 
 double correctChannel(double value)
@@ -316,6 +319,7 @@ Image* ip_invert (Image* src)
     int width = src->getWidth();
     int height = src->getHeight();
     
+
     Image* grey = new Image(width,height);
     
     for (int w =0; w<width; ++w)
@@ -423,7 +427,9 @@ Image* ip_rotate (Image* src, double theta, int x, int y, int samplingMode,
 Image* ip_saturate (Image* src, double alpha)
 {
     Image* greyImage = ip_grey(src);
+
     return ip_interpolate(src, greyImage, alpha);
+
 }
 
 
