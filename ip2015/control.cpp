@@ -336,7 +336,7 @@ void process_func (int value)
 		}
 
 	case M_PROCESS_FUN_WARP:  // enum #16
-		resultImage = ip_fun_warp(currentImage);
+            resultImage = ip_fun_warp(currentImage);
 		break;
 
 	case M_PROCESS_GREY: // enum #17
@@ -345,9 +345,8 @@ void process_func (int value)
 
 	case M_PROCESS_IMAGE_SHIFT: // enum #18
 		{
-			double dx = getDouble("dx");
-			double dy = getDouble("dy");
-			resultImage = ip_image_shift(currentImage,dx, dy);
+            cerr << "This filter is not implented."<< endl;
+            
 			break;
 		}
 
@@ -356,8 +355,11 @@ void process_func (int value)
 		break;
 
 	case M_PROCESS_MISC: // enum #20
-		resultImage = ip_misc(currentImage);
-		break;
+        {
+            double gamma = getDouble("gamma value");
+            resultImage = ip_misc(currentImage, gamma);
+            break;
+        }
 
 
 	case M_PROCESS_QUANTIZE_SIMPLE:  // enum #21
@@ -462,6 +464,7 @@ void process_func (int value)
 			cerr<<"Invalid value, using default sigma of 1"<<endl;
 		}
 		samplingMode=I_GAUSSIAN;
+        break;
 
 	case M_PROCESS_THRESHOLD: // enum #23
 		{

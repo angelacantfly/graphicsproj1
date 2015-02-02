@@ -40,7 +40,7 @@ Image*	ip_grey (Image* src);
 Image*  ip_image_shift(Image* src, double dx, double dy);
 Image*  ip_interpolate(Image* src1, Image* src2, double alpha);
 Image*	ip_invert (Image* src);
-Image*	ip_misc(Image* src);
+Image*	ip_misc(Image* src, double gamma);
 Image*	ip_quantize_simple (Image* src, int bitsPerChannel);
 Image*	ip_quantize_ordered (Image* src, int bitsPerChannel);
 Image*	ip_quantize_fs (Image* src, int bitsPerChannel);
@@ -51,6 +51,7 @@ Image*	ip_rotate (Image* src, double theta, int x, int y, int samplingMode, int 
 Image*	ip_saturate (Image* src, double alpha);
 Image*	ip_scale (Image* src, double x, double y, int samplingMode, int gaussianFilterSize, double gauusianSigma);
 Image*	ip_threshold (Image* src, double cutoff);
+//Image* ip_gamma(Image* src, double gamma);
 
 
 

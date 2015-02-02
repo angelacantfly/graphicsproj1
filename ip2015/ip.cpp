@@ -238,7 +238,7 @@ Image* ip_crop (Image* src, int x0, int y0, int x1, int y1)
 */
 Image* ip_edge_detect (Image* src)
 {
-    
+ //Normal Edge Detect
     double* kernel = new double[9];
     
     for(int i = 0; i < 9; i++){
@@ -248,6 +248,7 @@ Image* ip_edge_detect (Image* src)
     kernel[4] = 8;
     
     return ip_convolve(src, 3, kernel);
+    
 }
 
 
@@ -392,10 +393,53 @@ Image* ip_invert (Image* src)
 * you need to request any input paraters here, not in control.cpp
 */
 
-Image* ip_misc(Image* src)
+Image* ip_misc(Image* src, double gamma)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++c) {
+                newImage->setPixel(w, h, c, pow(src->getPixel(w, h, c),1.0/gamma));
+            }
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
+    
+    //// Problematic TV display;
+    //    double* kernel = new double[9];
+    //    kernel[0] = -1;
+    //    kernel[1] = 0;
+    //    kernel[2] = 1;
+    //    kernel[3] = -2;
+    //    kernel[4] = 0;
+    //    kernel[5] = 2;
+    //    kernel[6] = -1;
+    //    kernel[7] = 0;
+    //    kernel[8] = 1;
+    //
+    //    Image* intermediate = ip_convolve(src, 3, kernel);
+    //
+    //    double* kernel2 = new double[9];
+    //    kernel[0] = -1;
+    //    kernel[1] = -2;
+    //    kernel[2] = -1;
+    //    kernel[3] = 0;
+    //    kernel[4] = 0;
+    //    kernel[5] = 0;
+    //    kernel[6] = 1;
+    //    kernel[7] = 2;
+    //    kernel[8] = 1;
+    //    
+    //    return ip_convolve(intermediate, 3, kernel2);
+
 }
 
 
@@ -422,18 +466,6 @@ Image* ip_quantize_simple (Image* src, int bitsPerChannel)
     return newImage;
 }
 
-
-/*
-* dither each pixel to the nearest value in the new number of bits
-* using a static 4x4 matrix
-*/
-Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
-{
-	cerr << "This function is not implemented." << endl;
-	return NULL;
-}
-
-
 /*
  *
  *
@@ -454,61 +486,126 @@ double quantize_fs_helper(double value, double* threshold){
 }
 
 
+
 /*
 * dither each pixel to the nearest value in the new number of bits
-* using error diffusion
+* using a static 2x2 matrix
 */
-//Image* ip_quantize_fs (Image* src, int bitsPerChannel)
-//{
+Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
+{
+//    int numPixelIntensity = pow(2, bitsPerChannel);
+//    double intensityArray[numPixelIntensity];
+//    intensityArray[0] = 0;
+//    intensityArray[numPixelIntensity-1]= 1;
+//    for (int i = 1; i < numPixelIntensity - 1; ++i){
+//        intensityArray[i] = ((double) i )/(numPixelIntensity-1);
+//    }
+//    
+//    int numBlocks = (pow(2, bitsPerChannel) -2)*4 + 5;
+//    double* blockThreshold = new double[numBlocks];
+//    blockThreshold[0]= 0;
+//    blockThreshold[numBlocks] = 1;
+//    for (int i = 1; i < numBlocks-1; ++i)
+//        blockThreshold[i] = ((double) i)/(numBlocks -1);
+//    
+//    double* blockCutoffs = new double[numBlocks + 1];
+//    blockCutoffs[0] = 0;
+//    blockCutoffs[numBlocks] = 1;
+//    
+//    for(int i = 1; i < numBlocks -1 ; i++){
+//        blockCutoffs[i] = (blockThreshold[i-1] + blockCutoffs[i])/2;
+//    }
+//    
 //    int width = src->getWidth();
 //    int height = src->getHeight();
 //    int channels = 3;
 //    
-//    double matrix [width][height][channels];
-//    int outputLevels = pow(2, bitsPerChannel);
-//    double threshold[outputLevels+1];
-//    
-//    double outputArray[outputLevels];
-//    for(int j = 0; j < outputLevels; j++){
-//        outputArray[j] = j/(outputLevels-1);
-//        cerr<< "outputArray: + " << outputArray[j] << endl;
-//    }
-//    
-//    threshold[0] = 0;
-//    threshold[outputLevels] = 1;
-//    
-//    for(int i = 1; i < outputLevels; i++){
-//        threshold[i] = (outputArray[i-1] + outputArray[i])/2;
-//         cerr<< "threshold: + " << threshold[i] << endl;
-//    }
-//    
 //    
 //    Image* newImage = new Image(width, height, bitsPerChannel);
 //    Pixel currentPixel;
-//    
-//    for (int w =0; w<width; ++w)
-//        for (int h=0; h<height; ++h)
-//        {
-//            for(int c = 0; c < 3; c++){
-//
-//                double value = src->getPixel(width, height, c);
-//                double getError = matrix[w][h][c];
-//                newImage->setPixel(width, height, c, quantize_fs_helper(value, threshold) + getError);
-//                
-//                // Right
-//                matrix[w+1][h][c] = meow;
-//                // Down
-//                matrix[w][h+1][c] = meow;
-//                // Down left
-//                matrix[w-1][h+1][c] = meow;
-//                // Down right
-//                matrix[w+1][h+1][c] = meow;
+//    for (int w = 0; w < width; w = w + 2) {
+//        for (int h = 0; h < height; h = h + 2)
+//            for (int c = 0; c < 3; ++c) {
+//                double value = src->getPixel(w, h, c);
+//                double newValue = quantize_fs_helper(value, blockCutoffs);
 //            }
-//            
-//            newImage->setPixel(w, h, src->getPixel(w, h, currentPixel));
-//        }
+//    }
 //    
 //    return newImage;
+    cerr << "This function is not implemented." << endl;
+    return NULL;
+}
+
+
+/*
+* dither each pixel to the nearest value in the new number of bits
+* using error diffusion
+*/
+Image* ip_quantize_fs (Image* src, int bitsPerChannel)
+{
+    int width = src->getWidth();
+    int height = src->getHeight();
+    int channels = 3;
+    
+    double matrix [width][height][channels];
+    for (int w = 0; w <width; ++w)
+        for (int h = 0; h<height; ++h)
+            for (int c = 0; c < 3; ++c) {
+                matrix[w][h][c] = 0;
+            }
+    int outputLevels = pow(2, bitsPerChannel);
+    double threshold[outputLevels+1];
+    
+    double outputArray[outputLevels];
+    for(int j = 0; j < outputLevels; j++){
+        outputArray[j] = j/(outputLevels-1);
+    }
+    
+    threshold[0] = 0;
+    threshold[outputLevels] = 1;
+    
+    for(int i = 1; i < outputLevels; i++){
+        threshold[i] = (outputArray[i-1] + outputArray[i])/2;
+    }
+    
+    
+    Image* newImage = new Image(width, height, bitsPerChannel);
+    Pixel currentPixel;
+    
+    for (int w =0; w<width; ++w)
+        for (int h=0; h<height; ++h)
+        {
+            for(int c = 0; c < 3; c++){
+                // Calculating the value for Pixel(w,h)
+                double value = src->getPixel(w, h, c);
+                double getError = matrix[w][h][c];
+                if (w >= width or h>= height)
+                    getError = 0;
+                double quantized = quantize_fs_helper(value, threshold) + getError;
+                newImage->setPixel(w, h, c, correctChannel(quantized));
+                
+                // Calculate errors for Pixel(w,h) and its neighbors
+                double difference = src->getPixel(w, h, c) - newImage->getPixel(w, h, c);
+                
+                // Right
+                if (w < width - 1 and h < height)
+                    matrix[w+1][h][c] += difference * (7/16);
+                // Down
+                if (w < width and h < height -1)
+                    matrix[w][h+1][c] += difference * (5/16);
+                // Down left
+                if (0 < w < width and h < height -1)
+                    matrix[w-1][h+1][c] += difference * (3/16);
+                // Down right
+                if (w < width -1 and h < height -1)
+                    matrix[w+1][h+1][c] += difference * (1/16);
+                
+            }
+            
+            newImage->setPixel(w, h, src->getPixel(w, h, currentPixel));
+        }
+    
+    return newImage;
 }
 
 
@@ -600,7 +697,5 @@ Image* ip_threshold (Image* src, double cutoff)
     cerr << "Done!" << endl;
     return newImage;
 }
-
-
 
 
