@@ -590,6 +590,7 @@ double quantize_fs_helper(double value, double* threshold){
 * dither each pixel to the nearest value in the new number of bits
 * using a static 2x2 matrix
 */
+
 Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
 {
 //    int numPixelIntensity = pow(2, bitsPerChannel);
@@ -647,17 +648,21 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
     int channels = 3;
     
     double matrix [width][height][channels];
+
     for (int w = 0; w <width; ++w)
         for (int h = 0; h<height; ++h)
             for (int c = 0; c < 3; ++c) {
                 matrix[w][h][c] = 0;
             }
+
     int outputLevels = pow(2, bitsPerChannel);
     double threshold[outputLevels+1];
     
     double outputArray[outputLevels];
     for(int j = 0; j < outputLevels; j++){
         outputArray[j] = j/(outputLevels-1);
+
+
     }
     
     threshold[0] = 0;
@@ -665,6 +670,8 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
     
     for(int i = 1; i < outputLevels; i++){
         threshold[i] = (outputArray[i-1] + outputArray[i])/2;
+
+
     }
     
     
@@ -675,6 +682,7 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
         for (int h=0; h<height; ++h)
         {
             for(int c = 0; c < 3; c++){
+
                 // Calculating the value for Pixel(w,h)
                 double value = src->getPixel(w, h, c);
                 double getError = matrix[w][h][c];
@@ -699,6 +707,7 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
                 if (w < width -1 and h < height -1)
                     matrix[w+1][h+1][c] += difference * (1/16);
                 
+
             }
             
             newImage->setPixel(w, h, src->getPixel(w, h, currentPixel));
