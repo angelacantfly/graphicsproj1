@@ -356,12 +356,8 @@ void process_func (int value)
 		break;
 
 	case M_PROCESS_MISC: // enum #20
-        {
-//            double gamma = getDouble("Gamma value:");
-//            resultImage = ip_misc(currentImage,gamma);
-            resultImage = ip_misc_sobel(currentImage);
-            break;
-        }
+		resultImage = ip_misc(currentImage);
+		break;
 
 
 	case M_PROCESS_QUANTIZE_SIMPLE:  // enum #21

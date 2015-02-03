@@ -278,13 +278,22 @@ Image* ip_extract (Image* src, int channel)
 /*
 * create your own fun warp
 */
-Image* ip_fun_warp (Image* src)
+Image* ip_fun_warp (Image* src, int samplingMode)
 {
-
-	//  ask user for input parameters here including resampling method and, 
-	//  if gaussian resampling is used, its filtersize and sigma
-	//  if you implement more than one warp, you should ask the 
-	//  user to chose the one to perform here too!
+//    double radius;
+//    double rn;
+//    double a;
+//    int width = src->getWidth();
+//    int height = src->getHeight();
+//    Image* result = new Image(width, height);
+//    
+//    for (int w = 0; w < width; ++w) {
+//        for (int h = 0; h < height; ++h) {
+//            radius = sqrt(pow(w - ((double)width)/2),2) + pow(w - ((double)width)/2),2));
+//        }
+//    }
+//    
+    
 
 	return NULL;
 }
@@ -442,9 +451,99 @@ Image* ip_misc(Image* src, double gamma)
 
 }
 
+Image* ip_misc_gamma(Image* src, double gamma)
+{
+    // get width and height
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++c) {
+                newImage->setPixel(w, h, c, pow(src->getPixel(w, h, c),1.0/gamma));
+            }
+        }
+    }
+    
+    cerr << "Done!" << endl;
+    return newImage;
+}
 
+Image* ip_misc_tv(Image* src)
+{
+    
+    double* kernel = new double[9];
+    kernel[0] = -1;
+    kernel[1] = 0;
+    kernel[2] = 1;
+    kernel[3] = -2;
+    kernel[4] = 0;
+    kernel[5] = 2;
+    kernel[6] = -1;
+    kernel[7] = 0;
+    kernel[8] = 1;
+    
+    Image* intermediate = ip_convolve(src, 3, kernel);
+    
+    double* kernel2 = new double[9];
+    kernel[0] = -1;
+    kernel[1] = -2;
+    kernel[2] = -1;
+    kernel[3] = 0;
+    kernel[4] = 0;
+    kernel[5] = 0;
+    kernel[6] = 1;
+    kernel[7] = 2;
+    kernel[8] = 1;
+    
+    return ip_convolve(intermediate, 3, kernel2);
+}
 
-
+Image* ip_misc_sobel(Image* src)
+{
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    double* kernel = new double[9];
+    kernel[0] = -1;
+    kernel[1] = 0;
+    kernel[2] = 1;
+    kernel[3] = -2;
+    kernel[4] = 0;
+    kernel[5] = 2;
+    kernel[6] = -1;
+    kernel[7] = 0;
+    kernel[8] = 1;
+    
+    Image* g_x = ip_convolve(src, 3, kernel);
+    
+    double* kernel2 = new double[9];
+    kernel[0] = -1;
+    kernel[1] = -2;
+    kernel[2] = -1;
+    kernel[3] = 0;
+    kernel[4] = 0;
+    kernel[5] = 0;
+    kernel[6] = 1;
+    kernel[7] = 2;
+    kernel[8] = 1;
+    
+    Image* g_y = ip_convolve(src, 3, kernel2);
+    
+    Image* result = new Image(width, height);
+    double resultPixel = 0;
+    
+    for (int w = 0; w < width; ++w)
+        for (int h = 0; h < height; ++h)
+            for (int c = 0; c < 3; ++c)
+            {
+                resultPixel = sqrt(pow(g_x->getPixel(w, h, c), 2) + pow(g_y->getPixel(w, h, c), 2));
+                result->setPixel(w, h, c, correctChannel(resultPixel));
+            }
+    return result;
+}
 /*
 * round each pixel to the nearest value in the new number of bits
 */
@@ -613,10 +712,16 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
 * nearest neighbor sample
 */
 Pixel ip_resample_nearest(Image* src, double x, double y) {
-	cerr << "This function is not implemented." << endl;
-	Pixel myPixel(0,0,0);
+    double roundx = floor(x);
+    double roundy = floor(y);
+    if (x - roundx >= 0.5)
+        roundx += 1;
+    if (y - roundy >= 0.5)
+        roundy +=1;
+    
+    Pixel resultPixel;
 
-	return myPixel;
+	return src->getPixel(roundx, roundy, resultPixel);
 }
 
 /*
@@ -624,9 +729,52 @@ Pixel ip_resample_nearest(Image* src, double x, double y) {
 */
 
 Pixel ip_resample_bilinear(Image* src, double x, double y) {
-	cerr << "This function is not implemented." << endl;
-	Pixel myPixel(0,0,0);
-	return myPixel;
+    Pixel resultPixel;
+    double roundx = floor(x);
+    double roundy = floor(y);
+    double leftTop = 0;
+    double rightTop = 0;
+    double leftBot = 0;
+    double rightBot = 0;
+    double value1 = 0;
+    double value2 = 0;
+    double finalValue = 0;
+    
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    for (int c = 0; c <3; ++c) {
+        leftTop = src->getPixel(roundx, roundy, c);
+        // Bound checking
+        if (roundx + 1 < width)
+        {
+            rightTop = src->getPixel(roundx+1, roundy, c);
+            if (roundy + 1 < height)
+                rightBot = src->getPixel(roundx+1, roundy+1, c);
+            else
+                rightBot = 0;
+        }
+        else
+        {
+            rightTop = 0;
+            rightBot = 0;
+        }
+            
+        if (roundy + 1 < height)
+            leftBot = src->getPixel(roundx, roundy+1, c);
+        else
+            leftBot = 0;
+        
+        
+        value1 = leftTop * (roundx + 1 - x) + rightTop * (x - roundx);
+        value2 = leftBot * (roundx + 1 - x) + rightBot * (x - roundx);
+        
+        finalValue = value1 * (roundy + 1 - y) + value2 * (y - roundy);
+        resultPixel.setColor(c, finalValue);
+    }
+    
+    
+	return resultPixel;
 }
 
 /*
@@ -634,9 +782,30 @@ Pixel ip_resample_bilinear(Image* src, double x, double y) {
 */
 Pixel ip_resample_gaussian(Image* src, double x, double y, int size, double sigma)
 {
-	cerr << "This function is not implemented." << endl;
-	Pixel myPixel(0,0,0);
-	return myPixel;
+    Pixel resultPixel;
+    int width = src->getWidth();
+    int height = src->getHeight();
+    int i;
+    int j;
+    int roundx = floor(x);
+    int roundy = floor(y);
+    
+    for (int c = 0; c < 3; ++c) {
+        int value = 0;
+        for (int dx = -((double) size)/2; dx < ((double) size)/2; ++dx) {
+            for (int dy = -((double) size)/2; dy < ((double) size)/2; ++dy) {
+                i = roundx + dx;
+                j = roundy + dy;
+                
+                if (i < width and j < height) {
+                    value += src->getPixel(i, j, c) * exp(-(pow(x-i, 2) + pow(y-j, 2))/(2 * pow(sigma, 2)));
+                }
+            }
+        }
+        resultPixel.setColor(c, value);
+    }
+    
+    return resultPixel;
 }
 
 /*

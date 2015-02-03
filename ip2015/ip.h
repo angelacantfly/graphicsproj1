@@ -35,7 +35,7 @@ Image*  ip_convolve(Image* src, int size, double* kernel);
 Image*	ip_crop (Image* src, int x0, int y0, int x1, int y1);
 Image*	ip_edge_detect (Image* src);
 Image*	ip_extract (Image* src, int channel);
-Image*	ip_fun_warp (Image* src);
+Image*	ip_fun_warp (Image* src, int samplingModel);
 Image*	ip_grey (Image* src);
 Image*  ip_image_shift(Image* src, double dx, double dy);
 Image*  ip_interpolate(Image* src1, Image* src2, double alpha);
@@ -51,7 +51,7 @@ Image*	ip_rotate (Image* src, double theta, int x, int y, int samplingMode, int 
 Image*	ip_saturate (Image* src, double alpha);
 Image*	ip_scale (Image* src, double x, double y, int samplingMode, int gaussianFilterSize, double gauusianSigma);
 Image*	ip_threshold (Image* src, double cutoff);
-//Image* ip_gamma(Image* src, double gamma);
+Image* ip_misc_sobel(Image* src);
 
 
 
