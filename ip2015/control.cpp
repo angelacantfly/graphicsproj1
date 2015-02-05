@@ -359,7 +359,8 @@ void process_func (int value)
         {
 //            double gamma = getDouble("Gamma value:");
 //            resultImage = ip_misc(currentImage,gamma);
-            resultImage = ip_misc_sobel(currentImage);
+//            resultImage = ip_misc_sobel(currentImage);
+            resultImage = ip_misc_tv(currentImage);
             break;
         }
 

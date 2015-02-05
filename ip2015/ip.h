@@ -52,7 +52,7 @@ Image*	ip_saturate (Image* src, double alpha);
 Image*	ip_scale (Image* src, double x, double y, int samplingMode, int gaussianFilterSize, double gauusianSigma);
 Image*	ip_threshold (Image* src, double cutoff);
 Image* ip_misc_sobel(Image* src);
-
+Image* ip_misc_tv(Image* src);
 
 
 

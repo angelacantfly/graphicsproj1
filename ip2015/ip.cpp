@@ -122,8 +122,21 @@ Image* ip_color_shift(Image* src)
 Image* ip_composite (Image* src1, Image* src2, 
 					 Image* mask)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    int width = src1->getWidth();
+    int height = src1->getHeight();
+    
+    Image* result = new Image(width, height);
+    double value;
+    double maskValue;
+    
+    for (int w = 0; w < width; ++w)
+        for (int h = 0; h < height; ++h)
+            for (int c= 0; c < 3; ++c) {
+                maskValue = mask->getPixel(w, h, c);
+                value = (1 -maskValue)* src1->getPixel(w, h, c) +  maskValue * src2->getPixel(w, h, c);
+                result->setPixel(w, h, c, value);
+            }
+    return result;
 }
 
 
@@ -283,19 +296,70 @@ Image* ip_fun_warp (Image* src, int samplingMode)
 //    double radius;
 //    double rn;
 //    double a;
-//    int width = src->getWidth();
-//    int height = src->getHeight();
-//    Image* result = new Image(width, height);
-//    
-//    for (int w = 0; w < width; ++w) {
-//        for (int h = 0; h < height; ++h) {
-//            radius = sqrt(pow(w - ((double)width)/2),2) + pow(w - ((double)width)/2),2));
-//        }
-//    }
-//    
+    samplingMode =  I_GAUSSIAN;
+    cerr << "Sampling method is " << samplingMode << endl;
+    int width = src->getWidth();
+    int height = src->getHeight();
+    Image* result = new Image(width, height);
+    
+    Pixel currentPixel;
+    double x;
+    double y;
+    double wHalf = ((double) width)/2;
+    double hHalf = ((double) height)/2;
+    
+    for (int w = 0; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+//            radius = sqrt(pow(w - ((double) width)/2, 2)+ pow(h - ((double) height)/2, 2));
+//            a = atan2(w - ((double) width)/2, h - ((double) height)/2);
+//            rn = pow(radius, 2.5)/2;
+//            
+//            x = rn * cos(a) + ((double) width)/2;
+//            y = rn * sin(a) + ((double) width)/2;
+//            
+//            
+//            if (samplingMode == I_BILINEAR) {
+//                currentPixel = ip_resample_bilinear(src, x, y);
+//            }
+//            else {
+//                currentPixel = ip_resample_nearest(src, x, y);
+//            }
+//            
+//            result->setPixel(w, h, currentPixel);
+            if (w <= wHalf and h <= hHalf) {
+                x = w;
+                y = h;
+            }
+            else if (w > wHalf and h <= hHalf) {
+                x = width - 1 - w;
+                y = h;
+            }
+            else if (w <= wHalf and h > hHalf) {
+                x = w;
+                y = height - 1 - h;
+            }
+            else {
+                x = width - 1 - w;
+                y = height - 1 - h;
+            }
+            
+            if (samplingMode == I_BILINEAR) {
+                currentPixel = ip_resample_bilinear(src, x, y);
+            }
+            else if (samplingMode == I_GAUSSIAN) {
+                currentPixel = ip_resample_gaussian(src, x, y, 3, 0.5);
+            }
+            else
+            {
+                currentPixel = ip_resample_nearest(src, x, y);
+            }
+            
+            result->setPixel(w, h, currentPixel);
+        }
+    }
     
 
-	return NULL;
+	return result;
 }
 /*
 * create a new image with values equal to the psychosomatic intensities
@@ -336,8 +400,27 @@ Image* ip_grey (Image* src)
 
 Image* ip_image_shift (Image* src, double dx, double dy)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+//    (i+dx)%width, (j+dy)%height.
+    
+    int width = src->getWidth();
+    int height = src->getHeight();
+    
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++c) {
+                
+                int x = ( w + (int) dx ) % width;
+                int y = ( h + (int) dy ) % height;
+                newImage->setPixel(w, h,c,src->getPixel(x,y,c) );
+            }
+            
+            
+        }}
+	
+    return newImage;
 }
 /*
 * interpolate an image with another image
@@ -602,18 +685,18 @@ Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
 //    }
 //    
 //    int numBlocks = (pow(2, bitsPerChannel) -2)*4 + 5;
-//    double* blockThreshold = new double[numBlocks];
-//    blockThreshold[0]= 0;
-//    blockThreshold[numBlocks] = 1;
+//    double* blockOutputLevels = new double[numBlocks];
+//    blockOutputLevels[0]= 0;
+//    blockOutputLevels[numBlocks] = 1;
 //    for (int i = 1; i < numBlocks-1; ++i)
-//        blockThreshold[i] = ((double) i)/(numBlocks -1);
+//        blockOutputLevels[i] = ((double) i)/(numBlocks -1);
 //    
-//    double* blockCutoffs = new double[numBlocks + 1];
-//    blockCutoffs[0] = 0;
-//    blockCutoffs[numBlocks] = 1;
+//    double* blockThreshold = new double[numBlocks + 1];
+//    blockThreshold[0] = 0;
+//    blockThreshold[numBlocks] = 1;
 //    
 //    for(int i = 1; i < numBlocks -1 ; i++){
-//        blockCutoffs[i] = (blockThreshold[i-1] + blockCutoffs[i])/2;
+//        blockThreshold[i] = (blockOutputLevels[i-1] + blockOutputLevels[i])/2;
 //    }
 //    
 //    int width = src->getWidth();
@@ -632,7 +715,7 @@ Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
 //    }
 //    
 //    return newImage;
-    cerr << "This function is not implemented." << endl;
+//    cerr << "This function is not implemented." << endl;
     return NULL;
 }
 
@@ -792,26 +875,24 @@ Pixel ip_resample_bilinear(Image* src, double x, double y) {
 Pixel ip_resample_gaussian(Image* src, double x, double y, int size, double sigma)
 {
     Pixel resultPixel;
-    int width = src->getWidth();
-    int height = src->getHeight();
     int i;
     int j;
     int roundx = floor(x);
     int roundy = floor(y);
     
     for (int c = 0; c < 3; ++c) {
-        int value = 0;
+        double value = 0;
+        double sum = 0;
         for (int dx = -((double) size)/2; dx < ((double) size)/2; ++dx) {
             for (int dy = -((double) size)/2; dy < ((double) size)/2; ++dy) {
                 i = roundx + dx;
                 j = roundy + dy;
+                sum += exp(-(pow(x-i, 2) + pow(y-j, 2))/(2 * pow(sigma, 2)));
+                value += src->getPixel_(i, j, c) * exp(-(pow(x-i, 2) + pow(y-j, 2))/(2 * pow(sigma, 2)));
                 
-                if (i < width and j < height) {
-                    value += src->getPixel(i, j, c) * exp(-(pow(x-i, 2) + pow(y-j, 2))/(2 * pow(sigma, 2)));
-                }
             }
         }
-        resultPixel.setColor(c, value);
+        resultPixel.setColor(c, value/sum);
     }
     
     return resultPixel;
@@ -823,8 +904,42 @@ Pixel ip_resample_gaussian(Image* src, double x, double y, int size, double sigm
 Image* ip_rotate (Image* src, double theta, int x, int y, int samplingMode, 
 				  int gaussianFilterSize, double gaussianSigma)
 {
-	cerr << "This function is not implemented." << endl;
-	return NULL;
+    
+    int width = src->getWidth();
+    int height = src->getHeight();
+    double xx;
+    double yy;
+    theta = theta * 180 / M_PI;
+//    x = ((int) width)/2;
+//    y = ((int) height)/2;
+    
+    Image* newImage =  new Image(width, height);
+    
+    for (int w = 0 ; w < width; ++w) {
+        for (int h = 0; h < height; ++h) {
+            for (int c = 0; c < 3; ++c) {
+                xx = cos(theta) * ( w - x) - sin(theta)* (h - y)  + x;
+                yy = sin(theta) * (w -x ) - cos(theta) * (h-y) + y;
+                Pixel currentPixel;
+                if ( xx > 0 and xx < width and yy > 0 and yy < height) {
+                    if (samplingMode == I_BILINEAR)
+                        currentPixel = ip_resample_bilinear(src, xx, yy);
+                    else if (samplingMode == I_GAUSSIAN)
+                        currentPixel = ip_resample_gaussian(src, xx, yy, gaussianFilterSize, gaussianSigma);
+                    else
+                        currentPixel = ip_resample_nearest(src, xx, yy);
+                }
+                else{
+                    currentPixel = Pixel(0, 0, 0);
+                }
+               
+                newImage->setPixel(w, h, currentPixel);
+            }
+        }
+    }
+    
+    return newImage;
+    
 }
 
 
