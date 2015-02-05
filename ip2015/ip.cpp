@@ -293,10 +293,6 @@ Image* ip_extract (Image* src, int channel)
 */
 Image* ip_fun_warp (Image* src, int samplingMode)
 {
-//    double radius;
-//    double rn;
-//    double a;
-    samplingMode =  I_GAUSSIAN;
     cerr << "Sampling method is " << samplingMode << endl;
     int width = src->getWidth();
     int height = src->getHeight();
@@ -305,54 +301,31 @@ Image* ip_fun_warp (Image* src, int samplingMode)
     Pixel currentPixel;
     double x;
     double y;
-    double wHalf = ((double) width)/2;
-    double hHalf = ((double) height)/2;
+    double radius;
     
     for (int w = 0; w < width; ++w) {
         for (int h = 0; h < height; ++h) {
-//            radius = sqrt(pow(w - ((double) width)/2, 2)+ pow(h - ((double) height)/2, 2));
-//            a = atan2(w - ((double) width)/2, h - ((double) height)/2);
-//            rn = pow(radius, 2.5)/2;
-//            
-//            x = rn * cos(a) + ((double) width)/2;
-//            y = rn * sin(a) + ((double) width)/2;
-//            
-//            
-//            if (samplingMode == I_BILINEAR) {
-//                currentPixel = ip_resample_bilinear(src, x, y);
-//            }
-//            else {
-//                currentPixel = ip_resample_nearest(src, x, y);
-//            }
-//            
-//            result->setPixel(w, h, currentPixel);
-            if (w <= wHalf and h <= hHalf) {
-                x = w;
-                y = h;
-            }
-            else if (w > wHalf and h <= hHalf) {
-                x = width - 1 - w;
-                y = h;
-            }
-            else if (w <= wHalf and h > hHalf) {
-                x = w;
-                y = height - 1 - h;
-            }
-            else {
-                x = width - 1 - w;
-                y = height - 1 - h;
-            }
             
-            if (samplingMode == I_BILINEAR) {
+            // Convert coordinate to be on a scale [0,1]
+            x = 2 * ((double)w ) / (width - 1);
+            y = 2 * ((double) h) / (height -1);
+            radius = sqrt(pow(x - 0.5 , 2) + pow(y - 0.5,2));
+
+            double a = atan2(x - 0.5, y - 0.5);
+            double rn = pow(radius, 2)/2;
+            
+            y = rn * cos(a) + 0.5;
+            x = rn * sin(a) + 0.5;
+            
+            x = x * (width - 1)/2;
+            y = y * (height -1)/2;
+            
+            if (samplingMode == I_BILINEAR)
                 currentPixel = ip_resample_bilinear(src, x, y);
-            }
-            else if (samplingMode == I_GAUSSIAN) {
-                currentPixel = ip_resample_gaussian(src, x, y, 3, 0.5);
-            }
+            else if (samplingMode == I_GAUSSIAN)
+                currentPixel = ip_resample_gaussian(src, x, y, 3, 1.0);
             else
-            {
                 currentPixel = ip_resample_nearest(src, x, y);
-            }
             
             result->setPixel(w, h, currentPixel);
         }
@@ -504,33 +477,6 @@ Image* ip_misc(Image* src, double gamma)
     
     cerr << "Done!" << endl;
     return newImage;
-    
-    //// Problematic TV display;
-    //    double* kernel = new double[9];
-    //    kernel[0] = -1;
-    //    kernel[1] = 0;
-    //    kernel[2] = 1;
-    //    kernel[3] = -2;
-    //    kernel[4] = 0;
-    //    kernel[5] = 2;
-    //    kernel[6] = -1;
-    //    kernel[7] = 0;
-    //    kernel[8] = 1;
-    //
-    //    Image* intermediate = ip_convolve(src, 3, kernel);
-    //
-    //    double* kernel2 = new double[9];
-    //    kernel[0] = -1;
-    //    kernel[1] = -2;
-    //    kernel[2] = -1;
-    //    kernel[3] = 0;
-    //    kernel[4] = 0;
-    //    kernel[5] = 0;
-    //    kernel[6] = 1;
-    //    kernel[7] = 2;
-    //    kernel[8] = 1;
-    //    
-    //    return ip_convolve(intermediate, 3, kernel2);
 
 }
 
@@ -789,7 +735,6 @@ Image* ip_quantize_fs (Image* src, int bitsPerChannel)
                 // Down right
                 if (w < width -1 and h < height -1)
                     matrix[w+1][h+1][c] += difference * (1/16);
-                
 
             }
             
@@ -812,10 +757,23 @@ Pixel ip_resample_nearest(Image* src, double x, double y) {
         roundy +=1;
     
     Pixel resultPixel;
-
+    if (roundx >= src->getWidth() or roundy >= src->getHeight()or roundx< 0 or roundy <0)
+        return Pixel(0,0,0);
 	return src->getPixel(roundx, roundy, resultPixel);
 }
 
+void ip_resample_nearest2( double x, double y, double& xx, double& yy)
+{
+    double roundx = floor(x);
+    double roundy = floor(y);
+    if (x - roundx >= 0.5)
+        roundx += 1;
+    if (y - roundy >= 0.5)
+        roundy +=1;
+    
+    xx = roundx;
+    yy = roundy;
+}
 /*
 * bilinear sample
 */
@@ -836,26 +794,32 @@ Pixel ip_resample_bilinear(Image* src, double x, double y) {
     int height = src->getHeight();
     
     for (int c = 0; c <3; ++c) {
-        leftTop = src->getPixel(roundx, roundy, c);
         // Bound checking
-        if (roundx + 1 < width)
+        if (roundx < width and roundy < height)
         {
-            rightTop = src->getPixel(roundx+1, roundy, c);
-            if (roundy + 1 < height)
-                rightBot = src->getPixel(roundx+1, roundy+1, c);
+            leftTop = src->getPixel(roundx, roundy, c);
+
+            if (roundx + 1 < width)
+            {
+                rightTop = src->getPixel(roundx+1, roundy, c);
+                if (roundy + 1 < height)
+                    rightBot = src->getPixel(roundx+1, roundy+1, c);
+                else
+                    rightBot = 0;
+            }
             else
+            {
+                rightTop = 0;
                 rightBot = 0;
-        }
-        else
-        {
-            rightTop = 0;
-            rightBot = 0;
-        }
+                leftTop =0;
+            }
             
-        if (roundy + 1 < height)
-            leftBot = src->getPixel(roundx, roundy+1, c);
-        else
-            leftBot = 0;
+            if (roundy + 1 < height)
+                leftBot = src->getPixel(roundx, roundy+1, c);
+            else
+                leftBot = 0;
+        }
+
         
         
         value1 = leftTop * (roundx + 1 - x) + rightTop * (x - roundx);
@@ -865,6 +829,8 @@ Pixel ip_resample_bilinear(Image* src, double x, double y) {
         resultPixel.setColor(c, finalValue);
     }
     
+    if (roundx >= src->getWidth() or roundy >= src->getHeight())
+        return Pixel(0,0,0);
     
 	return resultPixel;
 }
@@ -894,7 +860,8 @@ Pixel ip_resample_gaussian(Image* src, double x, double y, int size, double sigm
         }
         resultPixel.setColor(c, value/sum);
     }
-    
+    if (roundx >= src->getWidth() or roundy >= src->getHeight())
+        return Pixel(0,0,0);
     return resultPixel;
 }
 
@@ -909,35 +876,36 @@ Image* ip_rotate (Image* src, double theta, int x, int y, int samplingMode,
     int height = src->getHeight();
     double xx;
     double yy;
-    theta = theta * 180 / M_PI;
-//    x = ((int) width)/2;
-//    y = ((int) height)/2;
+    theta = theta / 180 * M_PI;
+    cerr << "Theta is " << theta << endl;
     
     Image* newImage =  new Image(width, height);
-    
+
     for (int w = 0 ; w < width; ++w) {
         for (int h = 0; h < height; ++h) {
-            for (int c = 0; c < 3; ++c) {
-                xx = cos(theta) * ( w - x) - sin(theta)* (h - y)  + x;
-                yy = sin(theta) * (w -x ) - cos(theta) * (h-y) + y;
-                Pixel currentPixel;
-                if ( xx > 0 and xx < width and yy > 0 and yy < height) {
-                    if (samplingMode == I_BILINEAR)
-                        currentPixel = ip_resample_bilinear(src, xx, yy);
-                    else if (samplingMode == I_GAUSSIAN)
-                        currentPixel = ip_resample_gaussian(src, xx, yy, gaussianFilterSize, gaussianSigma);
-                    else
-                        currentPixel = ip_resample_nearest(src, xx, yy);
+            xx = cos(theta) * ( w - x) + sin(theta)* (y - h)  + x;
+            yy = -((- sin(theta) * ( w - x) + cos(theta)* (y - h) ) - y) ;
+            
+            Pixel currentPixel;
+            
+            if ( xx > 0 and xx < width and yy > 0 and yy < height) {
+                if (samplingMode == I_BILINEAR)
+                    currentPixel = ip_resample_bilinear(src, xx, yy);
+                else if (samplingMode == I_GAUSSIAN)
+                    currentPixel = ip_resample_gaussian(src, xx, yy, gaussianFilterSize, gaussianSigma);
+                else
+                {
+                    currentPixel = ip_resample_nearest(src, xx, yy);
                 }
-                else{
-                    currentPixel = Pixel(0, 0, 0);
-                }
-               
-                newImage->setPixel(w, h, currentPixel);
             }
+            else{
+                currentPixel = Pixel(0, 0, 0);
+            }
+            
+            newImage->setPixel(w, h, currentPixel);
         }
     }
-    
+
     return newImage;
     
 }
