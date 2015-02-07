@@ -478,6 +478,7 @@ Image* ip_misc(Image* src, double gamma)
     cerr << "Done!" << endl;
     return newImage;
 
+
 }
 
 Image* ip_misc_gamma(Image* src, double gamma)
@@ -622,47 +623,47 @@ double quantize_fs_helper(double value, double* threshold){
 
 Image* ip_quantize_ordered (Image* src, int bitsPerChannel)
 {
-//    int numPixelIntensity = pow(2, bitsPerChannel);
-//    double intensityArray[numPixelIntensity];
-//    intensityArray[0] = 0;
-//    intensityArray[numPixelIntensity-1]= 1;
-//    for (int i = 1; i < numPixelIntensity - 1; ++i){
-//        intensityArray[i] = ((double) i )/(numPixelIntensity-1);
-//    }
-//    
-//    int numBlocks = (pow(2, bitsPerChannel) -2)*4 + 5;
-//    double* blockOutputLevels = new double[numBlocks];
-//    blockOutputLevels[0]= 0;
-//    blockOutputLevels[numBlocks] = 1;
-//    for (int i = 1; i < numBlocks-1; ++i)
-//        blockOutputLevels[i] = ((double) i)/(numBlocks -1);
-//    
-//    double* blockThreshold = new double[numBlocks + 1];
-//    blockThreshold[0] = 0;
-//    blockThreshold[numBlocks] = 1;
-//    
-//    for(int i = 1; i < numBlocks -1 ; i++){
-//        blockThreshold[i] = (blockOutputLevels[i-1] + blockOutputLevels[i])/2;
-//    }
-//    
-//    int width = src->getWidth();
-//    int height = src->getHeight();
-//    int channels = 3;
-//    
-//    
-//    Image* newImage = new Image(width, height, bitsPerChannel);
-//    Pixel currentPixel;
-//    for (int w = 0; w < width; w = w + 2) {
-//        for (int h = 0; h < height; h = h + 2)
-//            for (int c = 0; c < 3; ++c) {
-//                double value = src->getPixel(w, h, c);
-//                double newValue = quantize_fs_helper(value, blockCutoffs);
-//            }
-//    }
-//    
-//    return newImage;
-//    cerr << "This function is not implemented." << endl;
-    return NULL;
+
+    int numPixelIntensity = pow(2, bitsPerChannel);
+    double intensityArray[numPixelIntensity];
+    intensityArray[0] = 0;
+    intensityArray[numPixelIntensity-1]= 1;
+    for (int i = 1; i < numPixelIntensity - 1; ++i){
+        intensityArray[i] = ((double) i )/(numPixelIntensity-1);
+    }
+    
+    int numBlocks = (pow(2, bitsPerChannel) -2)*4 + 5;
+    double* blockThreshold = new double[numBlocks];
+    blockThreshold[0]= 0;
+    blockThreshold[numBlocks] = 1;
+    for (int i = 1; i < numBlocks-1; ++i)
+        blockThreshold[i] = ((double) i)/(numBlocks -1);
+    
+    double* blockCutoffs = new double[numBlocks + 1];
+    blockCutoffs[0] = 0;
+    blockCutoffs[numBlocks] = 1;
+    
+    for(int i = 1; i < numBlocks -1 ; i++){
+        blockCutoffs[i] = (blockThreshold[i-1] + blockCutoffs[i])/2;
+    }
+    
+    int width = src->getWidth();
+    int height = src->getHeight();
+    int channels = 3;
+    
+    
+    Image* newImage = new Image(width, height, bitsPerChannel);
+    Pixel currentPixel;
+    for (int w = 0; w < width; w = w + 2) {
+        for (int h = 0; h < height; h = h + 2)
+            for (int c = 0; c < 3; ++c) {
+                double value = src->getPixel(w, h, c);
+                double newValue = quantize_fs_helper(value, blockCutoffs);
+            }
+    }
+    
+    return newImage;
+    
 }
 
 
